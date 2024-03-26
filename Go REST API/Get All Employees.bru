@@ -1,0 +1,15 @@
+meta {
+  name: Get All Employees
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{BaseUrl}}employees
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{Token}}
+}

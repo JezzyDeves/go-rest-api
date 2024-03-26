@@ -1,0 +1,17 @@
+meta {
+  name: Login
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{BaseUrl}}login
+  body: none
+  auth: none
+}
+
+script:post-response {
+  const body = res.getBody()
+  
+  bru.setEnvVar("Token",body)
+}
