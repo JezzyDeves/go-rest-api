@@ -1,0 +1,26 @@
+meta {
+  name: Create Employee
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{BaseUrl}}employees/create
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{Token}}
+}
+
+body:json {
+  {
+    "name": "First Last",
+    "dateOfBirth": "2000-01-01T05:00:00.000Z",
+    "jobTitle": "Software Engineer",
+    "salary": 80000,
+    "username": "first.last",
+    "password": "12345"
+  }
+}

@@ -8,10 +8,10 @@ import (
 
 type Employee struct {
 	gorm.Model
-	Name         string
-	DateOfBirth  time.Time
-	JobTitle     string
-	Salary       float32
-	Username     string
-	PasswordHash string
+	Name         string    `json:"name"`
+	DateOfBirth  time.Time `json:"dateOfBirth"`
+	JobTitle     string    `json:"jobTitle"`
+	Salary       float32   `json:"salary"`
+	Username     string    `json:"username"`
+	PasswordHash string    `json:"passwordHash"`
 }
