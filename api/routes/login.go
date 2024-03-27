@@ -19,6 +19,6 @@ func InitLoginRoute(e *echo.Echo) {
 
 		tokenString, _ := token.SignedString(SecretKey)
 
-		return c.JSON(http.StatusOK, tokenString)
+		return c.String(http.StatusOK, tokenString)
 	})
 }

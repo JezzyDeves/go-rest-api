@@ -1,15 +1,19 @@
 package routes
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/JezzyDeves/go-rest-api/db"
 	"github.com/JezzyDeves/go-rest-api/db/models"
 	"github.com/JezzyDeves/go-rest-api/validator"
+	"github.com/golang-jwt/jwt/v5"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type EmployeeCreateRequest struct {
@@ -49,6 +53,13 @@ func InitEmployeeRoutes(e *echo.Echo) {
 			return c.String(http.StatusBadRequest, err.Error())
 		}
 
+		var existingUser []models.Employee
+		db.Database.Where(&models.Employee{Username: employee.Username}).Find(&existingUser)
+
+		if len(existingUser) > 0 {
+			return c.String(http.StatusBadRequest, fmt.Sprintf("A user with the username %v already exists", employee.Username))
+		}
+
 		passwordHash, _ := bcrypt.GenerateFromPassword([]byte(employee.Password), bcrypt.DefaultCost)
 
 		db.Database.Create(&models.Employee{
@@ -61,5 +72,46 @@ func InitEmployeeRoutes(e *echo.Echo) {
 		})
 
 		return c.NoContent(http.StatusCreated)
+	})
+
+	type EmployeeLoginRequest struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	type EmployeeLoginClaims struct {
+		jwt.RegisteredClaims
+		Username string
+	}
+
+	g.POST("/login", func(c echo.Context) error {
+		var loginInfo EmployeeLoginRequest
+		c.Bind(&loginInfo)
+
+		var employee models.Employee
+		err := db.Database.
+			Where(&models.Employee{Username: loginInfo.Username}).
+			First(&employee).Error
+
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.String(http.StatusNotFound, "No user found")
+		}
+
+		err = bcrypt.CompareHashAndPassword([]byte(employee.PasswordHash), []byte(loginInfo.Password))
+
+		if err != nil {
+			return c.String(http.StatusBadRequest, "Incorrect login information")
+		}
+
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, EmployeeLoginClaims{
+			Username: loginInfo.Username,
+			RegisteredClaims: jwt.RegisteredClaims{
+				ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 30)),
+			},
+		})
+
+		tokenString, _ := token.SignedString(SecretKey)
+
+		return c.String(http.StatusOK, tokenString)
 	})
 }
